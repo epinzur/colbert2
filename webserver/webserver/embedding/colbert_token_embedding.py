@@ -12,14 +12,14 @@ from colbert.data import Queries
 from colbert.indexing.collection_encoder import CollectionEncoder
 from colbert.modeling.checkpoint import Checkpoint
 
-
+import os
 
 class ColbertTokenEmbeddings(TokenEmbeddings):
     """
     Colbert embeddings model.
 
     The embedding runs locally and requires the colbert library to be installed.
-    
+
     Example:
     Currently the pyarrow module requires a specific version to be installed.
 
@@ -65,7 +65,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
                 "Could not import colbert library. "
                 "Please install it with `pip install colbert`"
             ) from exc
-        
+
         try:
             import torch
             if torch.cuda.is_available():
@@ -77,19 +77,19 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
                         "Could not import faiss library. "
                         "Please install it with `pip install faiss-gpu`"
                     ) from e
-                    
+
         except ImportError as exc:
             raise ImportError(
                 "Could not import torch library. "
                 "Please install it with `pip install torch`"
             ) from exc
-        
+
         return values
 
-    
+
     def __init__(
             self,
-            checkpoint: str = "colbert-ir/colbertv2.0", 
+            checkpoint: str = "colbert-ir/colbertv2.0",
             doc_maxlen: int = 220,
             nbits: int = 1,
             kmeans_niters: int = 4,
@@ -185,7 +185,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
     def encode(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
         # collection = Collection(texts)
         # batches = collection.enumerate_batches(rank=Run().rank)
-        ''' 
+        '''
         config = ColBERTConfig(
             doc_maxlen=self.__doc_maxlen,
             nbits=self.__nbits,
