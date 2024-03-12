@@ -184,6 +184,7 @@ for dataset_name in datasets:
     print(f"Starting processing App: {app_id}")
     tru_recorder = get_recorder(colbert_query_engine, app_id, golden_set)
     for query in datasets[dataset_name]:
+        print(f"Starting query:{query}")
         try:
             with tru_recorder as recording:
                 colbert_query_engine.query(query)
@@ -191,3 +192,6 @@ for dataset_name in datasets:
             print(f"Query: '{query}' caused exception, skipping.")
 
 astra.close()
+
+duration = time.time() - start_time
+print(f"It took {duration} seconds to query the documents via colBERT.")
