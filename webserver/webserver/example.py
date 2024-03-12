@@ -69,13 +69,15 @@ astra.insert_colbert_embeddings_chunks(
 
 from embedding import ColbertAstraRetriever
 
-retriever = ColbertAstraRetriever(astraDB=astra, colbertEmbeddings=colbert)
+retriever = ColbertAstraRetriever(astraDB=astra, colbertEmbeddings=colbert, verbose=True)
 answers = retriever.retrieve("what's the toll free number to call for help?")
 for a in answers:
     print(f"answer rank {a['rank']} score {a['score']}, answer is {a['body']}\n")
 
 # LangChain retriever
-print(retriever.get_relevant_documents("what's the toll free number to call for help?"))
+from embedding import ColbertAstraLangChainRetriever
+lc_retriever = ColbertAstraLangChainRetriever(astraDB=astra, colbertEmbeddings=colbert, verbose=True)
+print(lc_retriever.get_relevant_documents("what's the toll free number to call for help?"))
 
 astra.close()
 

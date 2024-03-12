@@ -1,9 +1,6 @@
 from embedding import ColbertTokenEmbeddings
 
 from embedding import AstraDB
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.callbacks import CallbackManagerForRetrieverRun
-from langchain_core.documents import Document
 from pydantic import BaseModel
 from torch import tensor
 from typing import List
@@ -70,7 +67,7 @@ def max_similarity_torch(query_vector, embedding_list, is_cuda: bool=False):
     return max_sim
 
 
-class ColbertAstraRetriever(BaseRetriever):
+class ColbertAstraRetriever():
     astra: AstraDB
     colbertEmbeddings: ColbertTokenEmbeddings
     verbose: bool
@@ -87,7 +84,6 @@ class ColbertAstraRetriever(BaseRetriever):
         **kwargs
     ):
         # initialize pydantic base model
-        super().__init__(astra=astraDB, colbertEmbeddings=colbertEmbeddings, verbose=verbose, **kwargs)
         self.astra = astraDB
         self.colbertEmbeddings = colbertEmbeddings
         self.verbose = verbose
@@ -97,9 +93,7 @@ class ColbertAstraRetriever(BaseRetriever):
         self,
         query: str,
         k: int=10,
-        min_score: float=10.0,
         query_maxlen: int=64,
-        num_results: int=3,
         **kwargs
     ):
         #
@@ -139,16 +133,8 @@ class ColbertAstraRetriever(BaseRetriever):
         for title, part in docs_by_score:
             rs = self.astra.session.execute(self.astra.query_part_by_pk_stmt, [title, part])
             score = scores[(title, part)]
-            if score.item() > min_score and len(answers) < num_results:
-                answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
+            answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
             rank=rank+1
         # clean up on tensor memory on GPU
         del scores
         return answers
-
-    def _get_relevant_documents(
-        self, query: str, *, run_manager: CallbackManagerForRetrieverRun = None
-    ) -> List[Document]:
-        answers = self.retrieve(query)
-        documents = [Document(metadata={'title': d['title'], 'score': d['score'], 'rank': d['rank']}, page_content=d['body']) for d in answers]
-        return documents
