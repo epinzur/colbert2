@@ -25,6 +25,10 @@ import time
 import uuid
 import json
 
+
+k = 5
+query_maxlen = 64
+
 start_time = time.time()
 os.environ["ASTRA_DB_ENDPOINT"] = os.environ.get("ASTRA_DB_ENDPOINT_COLBERT")
 os.environ["ASTRA_DB_TOKEN"] = os.environ.get("ASTRA_DB_TOKEN_COLBERT")
@@ -152,7 +156,7 @@ class LlamaColBertRetriever(LlamaBaseRetriever):
     def _retrieve(self, query_bundle: QueryBundle) -> List[NodeWithScore]:
         """Retrieve nodes given query."""
 
-        results = retriever.retrieve(query_bundle.query_str)
+        results = retriever.retrieve(query_bundle.query_str, k=k, query_maxlen=query_maxlen)
         nodes = []
         for result in results:
             body = result['body']
@@ -176,7 +180,7 @@ colbert_query_engine = RetrieverQueryEngine(
 )
 
 for dataset_name in datasets:
-    app_id = f"ColBERT_AstraDB#{shortUuid}#{dataset_name}"
+    app_id = f"ColBERT_k_{k}_query_maxlen_{query_maxlen}#{shortUuid}#{dataset_name}"
     print(f"Starting processing App: {app_id}")
     tru_recorder = get_recorder(colbert_query_engine, app_id, golden_set)
     for query in datasets[dataset_name]:
