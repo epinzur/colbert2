@@ -34,7 +34,6 @@ colbert = ColbertTokenEmbeddings(
     doc_maxlen=220,
     nbits=1,
     kmeans_niters=4,
-    nranks=1,
 )
 
 passageEmbeddings = colbert.embed_documents(texts=collections, title=title)
@@ -65,7 +64,8 @@ astra.ping()
 print("astra db is connected")
 
 # astra insert colbert embeddings
-astra.insert_colbert_embeddings_chunks(passageEmbeddings)
+astra.insert_colbert_embeddings_chunks(
+    embeddings=passageEmbeddings, delete_existed_passage=True)
 
 from embedding import ColbertAstraRetriever
 
@@ -74,6 +74,8 @@ answers = retriever.retrieve("what's the toll free number to call for help?")
 for a in answers:
     print(f"answer rank {a['rank']} score {a['score']}, answer is {a['body']}\n")
 
+# LangChain retriever
+print(retriever.get_relevant_documents("what's the toll free number to call for help?"))
 
 astra.close()
 

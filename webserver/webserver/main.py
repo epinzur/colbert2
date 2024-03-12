@@ -40,7 +40,6 @@ def embedding(
     nbits: int = Query(1),
     kmeans_niters: int = Query(4),
     nranks: int = Query(1),
-    normalization_category: str = Query(NormalizationCategory.FLAT),
 ):
     key = f"{doc_maxlen}_{nbits}_{kmeans_niters}_{nranks}_{normalization_category}"
     if key in colBERTConfigs:

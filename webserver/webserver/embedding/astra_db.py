@@ -49,6 +49,11 @@ class AstraDB:
 
         # prepare statements
 
+        chunk_counts_cql = f"""
+        SELECT COUNT(*) FROM {keyspace}.chunks
+        """
+        self.chunk_counts_stmt = self.session.prepare(chunk_counts_cql)
+
         insert_chunk_cql = f"""
         INSERT INTO {keyspace}.chunks (title, part, body)
         VALUES (?, ?, ?)
@@ -65,7 +70,7 @@ class AstraDB:
         SELECT title, part
         FROM {keyspace}.colbert_embeddings
         ORDER BY bert_embedding ANN OF ?
-        LIMIT 5
+        LIMIT ?
         """
         self.query_colbert_ann_stmt = self.session.prepare(query_colbert_ann_cql)
 
@@ -139,8 +144,17 @@ class AstraDB:
     
     def insert_colbert_embeddings_chunks(
         self,
-        embeddings: List[PassageEmbeddings]
+        embeddings: List[PassageEmbeddings],
+        delete_existed_passage: bool = False
     ) -> None:
+        if delete_existed_passage:
+            for p in embeddings:
+                try:
+                    self.delete_title(p.title())
+                except Exception as e:
+                    # no need to throw error if the title does not exist
+                    # let the error propagate
+                    print(f"delete title {p.title()} error {e}")
         # insert chunks
         p_parameters = [(p.title(), p.part(), p.get_text()) for p in embeddings]
         execute_concurrent_with_args(self.session, self.insert_chunk_stmt, p_parameters)
@@ -152,6 +166,14 @@ class AstraDB:
             title = passageEmbd.title()
             parameters = [(title, e[1].part, e[1].id, e[1].get_embeddings()) for e in enumerate(passageEmbd.get_all_token_embeddings())] 
             execute_concurrent_with_args(self.session, self.insert_colbert_stmt, parameters)
+
+    def delete_title(self, title: str):
+        # Assuming `title` is a variable holding the title you want to delete
+        query = "DELETE FROM {}.chunks WHERE title = %s".format(self.keyspace)
+        self.session.execute(query, (title,))
+
+        query = "DELETE FROM {}.colbert_embeddings WHERE title = %s".format(self.keyspace)
+        self.session.execute(query, (title,))
 
     def close(self):
         self.session.shutdown()
