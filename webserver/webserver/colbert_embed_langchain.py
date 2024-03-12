@@ -70,3 +70,5 @@ astra.insert_colbert_embeddings_chunks(passageEmbeddings)
 
 duration = time.time() - start_time
 print(f"It took {duration} seconds to load the documents via colBERT.")
+
+astra.close()
